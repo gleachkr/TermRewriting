@@ -53,15 +53,15 @@ theorem joinable.increasing : increasing R joinable :=
 theorem joinable.fromSymClosure : SymClosure R ⊆ joinable R := 
   by  intro x y step
       cases step
-      . apply joinable.increasing; assumption
-      . apply joinable.isSymmetric; apply joinable.increasing; assumption
+      · apply joinable.increasing; assumption
+      · apply joinable.isSymmetric; apply joinable.increasing; assumption
 
 /-- Theorem 2.1.5 a -/
 theorem churchRosser_confluent : ∀{R : α → α → Prop}, churchRosser R → confluent R := 
   by  intro R h w y z step₁ step₂; apply h;
       apply ReflTransClosure.isTransitive (y:=w)
-      . apply ReflTransSymClosure.isSymmetric; exact ↑step₁
-      . exact ↑step₂
+      · apply ReflTransSymClosure.isSymmetric; exact ↑step₁
+      · exact ↑step₂
 
 /-- Theorem 2.1.5 b -/
 theorem confluent_semiconfluent : ∀{R : α → α → Prop}, confluent R → semiconfluent R := 
@@ -92,8 +92,8 @@ theorem semiconfluent_rosser : ∀{R: α → α → Prop}, semiconfluent R → c
 theorem semiconfluent_rosser_alt : ∀{R: α → α → Prop}, semiconfluent R → churchRosser R :=
   by intros R h
      apply ReflTransSymClosure.minimal
-     . exact ⟨joinable.isSymmetric R, joinable.isTransitive R h, joinable.isReflexive R⟩
-     . exact joinable.increasing R
+     · exact ⟨joinable.isSymmetric R, joinable.isTransitive R h, joinable.isReflexive R⟩
+     · exact joinable.increasing R
 
 /-- Corrolary 2.1.6 a -/
 theorem confluent_nf_flow : ∀{R: α → α → Prop}, confluent R →
