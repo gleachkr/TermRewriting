@@ -135,7 +135,15 @@ theorem terminating.finite_local_global : terminating R → finitely_branching R
         · simp
         · exact tcstep
 
-theorem acyclic.chain_injection : acyclic R → ∀c, isDescendingChain R c → Function.Injective c := 
+theorem terminating.acyclic : terminating R → acyclic R := by
+  intro term x cyc
+  apply (terminating.trans_closure R).mpr  term
+  exists λ_ ↦ x
+  intro _
+  simp_all
+
+theorem acyclic.chain_injection : acyclic R → ∀c, isDescendingChain R c → 
+    Function.Injective c := 
   by intro acyc chain desc x y eq
      apply byContradiction; intro neq
      cases Nat.lt_or_gt.mp neq <;> apply acyc (chain x)
@@ -146,7 +154,8 @@ theorem acyclic.chain_injection : acyclic R → ∀c, isDescendingChain R c → 
       conv => lhs; rw [eq]
       apply chain_tc_rel <;> aesop
 
-theorem acyclic.tc_infinite : acyclic R → ∀{c}, isDescendingChain R c → Infinite { z // TransClosure R (c 0) z } :=
+theorem acyclic.tc_infinite : acyclic R → ∀{c}, isDescendingChain R c → 
+    Infinite { z // TransClosure R (c 0) z } :=
   by intro acyc chain desc
      let f : Nat → { z // TransClosure R (chain 0) z } := 
         λn ↦ ⟨chain (n + 1), chain_tc_rel R desc (Nat.zero_lt_succ n)⟩
@@ -155,6 +164,48 @@ theorem acyclic.tc_infinite : acyclic R → ∀{c}, isDescendingChain R c → In
      have eq_c : (f x).val = (f y).val := by rw [eq]
      have := acyclic.chain_injection R acyc chain desc eq_c
      simp_all
+
+theorem acyclic.tc_subset : acyclic R → ∀x y, R x y → 
+    {z | TransClosure R y z} ⊂ { z | TransClosure R x z} := 
+  by intro acyc x y step; constructor
+     case left => 
+       intro z hyp
+       induction hyp
+       case base v w step₂ => 
+          apply TransClosure.step
+          · assumption
+          · apply TransClosure.base; assumption
+       case step t u v step₂ tcstep _ => 
+          apply TransClosure.step
+          · assumption
+          · apply TransClosure.step <;> assumption
+     case right => 
+        intro absurd
+        apply acyc
+        apply absurd
+        apply TransClosure.base
+        assumption
+
+theorem acyclic.fintype_tc_reducing : 
+  acyclic R → ∀x y, R x y → 
+    [Fintype {z | TransClosure R y z}] → [Fintype {z | TransClosure R x z}] →
+    Fintype.card {z | TransClosure R y z} < Fintype.card { z | TransClosure R x z} :=
+  by intro acyc x y step inst₁ inst₂
+     apply Set.card_lt_card
+     apply acyclic.tc_subset <;> assumption
+
+theorem globally_finite_fintype : globally_finite R → ∀x, Fintype {z | TransClosure R x z} := 
+  by intro fini x; simp; apply Set.Finite.fintype; apply fini
+
+noncomputable def globally_finite.card (h: globally_finite R) (x : α) : Nat :=
+  @Fintype.card { z | TransClosure R x z} (globally_finite_fintype R h x)
+
+theorem acyclic.finite_tc_reducing :
+  acyclic R → ∀x y, R x y → (h : globally_finite R) →
+    globally_finite.card R h y < globally_finite.card R h x :=
+  by intro acyc x y step fini; unfold globally_finite.card
+     apply @Set.card_lt_card α { z | TransClosure R y z} { z | TransClosure R x z} (globally_finite_fintype R fini y) (globally_finite_fintype R fini x)
+     apply acyclic.tc_subset <;> assumption
 
 /-- Lemma 2.2.5 -/
 theorem acyclic.globally_finite_terminates : 

@@ -28,11 +28,19 @@ theorem Nat.lt_terminating : terminating (λ x y => ¬Nat.le x y) := by
   apply this (chain 0) (chain 0) <;> try simp
   exists chain; simp_all
 
+/-- Lemma 2.3.3 -/
 theorem finitely_branching.terminating_iff_monotoneInN : finitely_branching R →
   (terminating R ↔ ∃f,monotoneIn R (λ x y => ¬Nat.le x y) f) := by
   intro fin_b; constructor
-  case mpr => intro ⟨f,mono⟩; apply monotoneIn.termination R (λ x y => ¬Nat.le x y) mono; apply Nat.lt_terminating
-  case mp => sorry
-
-
-
+  case mpr => 
+    intro ⟨f,mono⟩
+    apply monotoneIn.termination R (λ x y => ¬Nat.le x y) mono
+    apply Nat.lt_terminating
+  case mp => 
+    intro term
+    have gf := terminating.finite_local_global R term fin_b
+    have acyc := terminating.acyclic R term
+    exists (globally_finite.card R gf)
+    intro x y step; simp
+    apply acyclic.finite_tc_reducing R acyc x y
+    assumption
