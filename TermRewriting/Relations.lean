@@ -163,3 +163,24 @@ theorem ReflTransSymClosure.minimal : EquivalenceRel S → R ⊆ S → ReflTrans
         induction step
         case base step => cases step <;> aesop
         case step u v w step₁ _ _ => cases step₁ <;> aesop
+
+def isIrreflexive := ∀x, ¬R x x
+def isAsymmetric := ∀x y, R x y → ¬R y x
+def isConnected := ∀x y, x ≠ y → R x y ∨ R y x
+
+theorem isAsymmetric.isIrreflexive : isAsymmetric R → isIrreflexive R := by
+  intro asymR x; intro loop; apply asymR <;> assumption
+
+structure isStrictOrder (R : α → α → Prop) : Prop where
+  irref : isIrreflexive R
+  asymm : isAsymmetric R
+  trans : isTransitive R
+
+structure isStrictLinearOrder (R : α → α → Prop) : Prop where
+  irref : isIrreflexive R
+  asymm : isAsymmetric R
+  trans : isTransitive R
+  cnctd : isConnected R
+
+instance : Coe (isStrictLinearOrder R) (isStrictOrder R) where
+  coe s := ⟨s.irref, s.asymm, s.trans⟩

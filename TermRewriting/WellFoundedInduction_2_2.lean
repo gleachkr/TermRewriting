@@ -21,7 +21,7 @@ theorem iter_chain_rel : ∀f,(∀x, R x (f x)) → ∀x n, R (iter_chain f x n)
      conv => rhs; unfold iter_chain
      apply h
 
-theorem terminating_wWFI : terminating R → wWFI R := 
+theorem terminating.wWFI : terminating R → wWFI R := 
   by apply byContradiction
      simp; intro rterminates P ind y; apply byContradiction; intro start
      have successor : ∀z: {z : α // ¬P z}, ∃w : {z : α // ¬P z}, R z w := 
@@ -41,13 +41,13 @@ theorem terminating_wWFI : terminating R → wWFI R :=
      aesop
 
 theorem tcTerminating_WFI : terminating (TransClosure R) → WFI R := 
-  by intro h; exact terminating_wWFI (TransClosure R) h
+  by intro h; exact terminating.wWFI (TransClosure R) h
 
 -- Proof idea. Given the knowledge that if all transitive desendents of
 -- a node have x have P, then x does too, use one-step induction to show
 -- that everything is such that all its transitive descendents have P.
 -- Conclude that everything has P.
-theorem wWFI_WFI : wWFI R → WFI R := 
+theorem wWFI.WFI : wWFI R → WFI R := 
   by simp; intro ind P closure
      let closureProp (x : α) := ∀y, TransClosure R x y → P y
      have key : ∀x, closureProp x := by
@@ -67,8 +67,8 @@ theorem wWFI_WFI : wWFI R → WFI R :=
      apply key
 
 /-- Theorem 2.2.1 -/
-theorem terminating_WFI : terminating R → WFI R := by
-  intro h; apply wWFI_WFI; apply terminating_wWFI; assumption
+theorem terminating.WFI : terminating R → WFI R := by
+  intro h; apply wWFI.WFI; apply terminating.wWFI; assumption
 
 theorem chain_shift : ∀c, isDescendingChain R c → isDescendingChain R (λ n ↦ c (n + 1)) := by
   intro c chain n; apply chain
@@ -101,7 +101,7 @@ theorem WFI.tc_terminating : WFI R → terminating (TransClosure R) :=
 theorem terminating.trans_closure : terminating (TransClosure R) ↔ terminating R := by
   constructor
   case mp => intro term ⟨chain, absurd⟩; apply term; exists chain; apply chain_lift; assumption
-  case mpr => intro term; apply WFI.tc_terminating; apply terminating_WFI; assumption
+  case mpr => intro term; apply WFI.tc_terminating; apply terminating.WFI; assumption
 
 /-- Theorem 2.2.2 -/
 theorem WFI.terminating : WFI R → terminating R := by
@@ -117,7 +117,7 @@ def acyclic := ∀x, ¬TransClosure R x x
 /-- Lemma 2.2.4 -/
 theorem terminating.finite_local_global : terminating R → finitely_branching R → globally_finite R := by
   intro term fini; simp
-  apply (terminating_WFI R)
+  apply (terminating.WFI R)
   · assumption
   · intro x ih
     simp_all
@@ -135,12 +135,22 @@ theorem terminating.finite_local_global : terminating R → finitely_branching R
         · simp
         · exact tcstep
 
+theorem terminating.irreflexive : terminating R → ∀x, ¬R x x := by
+  intro term x refl; apply term; exists λ_ ↦ x; intro n; simp; assumption
+
 theorem terminating.acyclic : terminating R → acyclic R := by
-  intro term x cyc
-  apply (terminating.trans_closure R).mpr  term
-  exists λ_ ↦ x
-  intro _
-  simp_all
+  intro term
+  apply terminating.irreflexive (TransClosure R)
+  exact (terminating.trans_closure R).mpr term
+
+theorem descending.fromAE (c : Nat → α) : (∀n, ∃m, n < m ∧ R (c n) (c m)) → 
+    ∃chain, isDescendingChain R chain := by
+  intro hyp
+  have ⟨next,cprop⟩ := skolem.mp hyp
+  exists (λn ↦ c (iter_chain next 0 n))
+  intro n; simp
+  conv => rhs; unfold iter_chain
+  apply (cprop (iter_chain next 0 n)).2
 
 theorem acyclic.chain_injection : acyclic R → ∀c, isDescendingChain R c → 
     Function.Injective c := 
