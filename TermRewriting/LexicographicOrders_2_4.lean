@@ -184,6 +184,7 @@ theorem List.toNTuple_length : ∀l : List α, (List.toNTuple l).1 = l.length :=
 
 def nOrder (n : Nat) := @nTuples α n → @nTuples α n → Prop
 
+@[simp] 
 def LexPower (n : Nat) : @nOrder α n :=
   match n with
   | 0 => λ_ _ ↦ False
@@ -194,6 +195,46 @@ theorem LexPower.ofTerminating : terminating R → ∀n, terminating (LexPower R
   case zero => intro ⟨_,desc⟩; apply desc 0
   case succ n ih => exact LexProduct.ofTerminating R (LexPower R n) term ih
 
+theorem LexPower.ofIrreflexive : isIrreflexive R → ∀n, isIrreflexive (LexPower R n) := by
+  intro irref n x loop
+  induction n
+  case zero => aesop
+  case succ => cases loop <;> aesop
+
+theorem LexPower.ofAsymmetric : isAsymmetric R → ∀n, isAsymmetric (LexPower R n) := by
+  intro asym n x y edge₁ edge₂
+  induction n
+  case zero => aesop
+  case succ n ih => 
+    cases edge₁ <;> cases edge₂ <;> aesop
+
+theorem LexPower.ofTransitive : isTransitive R → ∀n, isTransitive (LexPower R n) := by
+  intro trans n x y z edge₁ edge₂
+  induction n
+  case zero => aesop
+  case succ n ih => 
+    cases edge₁ <;> cases edge₂
+    case inl.inl edge₁ edge₂ => 
+      apply Or.inl; exact trans edge₁ edge₂
+    case inl.inr edge₁ edge₂ =>
+      rw [edge₂.1] at edge₁; apply Or.inl; assumption
+    case inr.inl edge₁ edge₂ =>
+      rw [←edge₁.1] at edge₂; apply Or.inl; assumption
+    case inr.inr edge₁ edge₂ =>
+      apply Or.inr; constructor
+      · exact Eq.trans edge₁.1 edge₂.1
+      · apply ih 
+        · exact edge₁.2 
+        · exact edge₂.2
+
+theorem LexPower.ofStrictOrder : 
+    isStrictOrder R → ∀n, isStrictOrder (LexPower R n) := by
+  intro strict; intro n; constructor
+  · apply LexPower.ofIrreflexive; exact strict.irref
+  · apply LexPower.ofAsymmetric; exact strict.asymm
+  · apply LexPower.ofTransitive; exact strict.trans
+
+@[aesop unsafe [constructors, cases]]
 inductive LexSum (T : β → Type u) (R : Πi: β, T i → T i → Prop) : (Σ i, T i) → (Σ i, T i) → Prop
   | step (i : β) (x y : T i) : R i x y → LexSum T R ⟨i,x⟩ ⟨i,y⟩
 
@@ -208,6 +249,25 @@ theorem LexSum.homogenousChains
     LexSum T R x y → R z (eq₁ ▸ x.2) (eq₂ ▸ y.2) := by
   intro step; cases step; aesop
 
+theorem LexSum.ofIrreflexive (T : β → Type u) (R : Πi: β, T i → T i → Prop) :
+    (∀i, isIrreflexive (R i)) → isIrreflexive (LexSum T R) := by
+    intro irr x loop; cases loop; aesop
+
+theorem LexSum.ofAsymmetric (T : β → Type u) (R : Πi: β, T i → T i → Prop) :
+    (∀i, isAsymmetric (R i)) → isAsymmetric (LexSum T R) := by
+    intro asym ⟨idx₁, x⟩ ⟨idx₂,y⟩ edge₁ edge₂; aesop
+
+theorem LexSum.ofTransitive (T : β → Type u) (R : Πi: β, T i → T i → Prop) :
+    (∀i, isTransitive (R i)) → isTransitive (LexSum T R) := by
+    intro trans ⟨idx₁, x⟩ ⟨idx₂,y⟩ ⟨idx₃,z⟩ edge₁ edge₂; aesop
+
+theorem LexSum.ofStrictOrder (T : β → Type u) (R : Πi: β, T i → T i → Prop) :
+    (∀i, isStrictOrder (R i)) → isStrictOrder (LexSum T R) := by
+    intro strict; constructor
+    · apply LexSum.ofIrreflexive; intro i; exact (strict i).irref
+    · apply LexSum.ofAsymmetric; intro i; exact (strict i).asymm
+    · apply LexSum.ofTransitive; intro i; exact (strict i).trans
+
 theorem LexSum.ofTerminating (T : β → Type u) (R : Πi: β, T i → T i → Prop) : 
     (∀i, terminating (R i)) → terminating (LexSum T R) := by
   intro term ⟨chain,desc⟩
@@ -220,9 +280,71 @@ theorem LexSum.ofTerminating (T : β → Type u) (R : Πi: β, T i → T i → P
   case zero => rfl
   case succ n ih => rw [ih]; exact LexSum.homogenousChains_aux2 (desc n)
 
+@[simp]
 def TupleOrdering : (Σn, nTuples α n) → (Σn, nTuples α n) → Prop :=
   LexSum (nTuples α) (λn ↦ LexPower R n)
 
-def List.lexOrdering (l₁ : List α) (l₂ : List α) := 
+abbrev List.lexOrdering (l₁ : List α) (l₂ : List α) := 
   l₁.length > l₂.length ∨ 
   (l₁.length = l₂.length ∧ TupleOrdering R l₁.toNTuple l₂.toNTuple)
+
+@[simp]
+def List.derivedPos (l : List α) : Nat × Σn, nTuples α n :=
+  ⟨l.length, l.toNTuple⟩
+
+abbrev List.derivedOrdering := LexProduct (λx y ↦ Nat.lt y x) (TupleOrdering R) 
+
+theorem List.derivedOrdering.ofTerminating : 
+    terminating R → terminating (List.derivedOrdering R) := by
+  intro termR
+  apply LexProduct.ofTerminating
+  · apply Nat.lt_terminating
+  · apply LexSum.ofTerminating
+    intro i; induction i
+    case a.a.zero => simp; intro ⟨_, desc⟩; apply desc 1
+    case a.a.succ n ih => simp; apply LexProduct.ofTerminating <;> assumption
+
+theorem List.derivedOrdering.ofStrictOrder : 
+    isStrictOrder R → isStrictOrder (List.derivedOrdering R) := by
+  intro strictR
+  apply LexProduct.ofStrictOrder
+  · exact ↑Nat.isStrictLinearOrder 
+  · simp
+    apply LexSum.ofStrictOrder
+    intro i
+    apply LexPower.ofStrictOrder
+    assumption
+
+theorem List.lexOrdering.iffDerived : 
+    ∀l₁ l₂, List.derivedOrdering R l₁.derivedPos l₂.derivedPos ↔ List.lexOrdering R l₁ l₂ := by
+  intro l₁ l₂; constructor; all_goals {
+    intro h
+    cases h
+    case inl lor => apply Or.inl; aesop
+    case inr ror => apply Or.inr; aesop
+  }
+
+/-- Lemma 2.4.3 (a) -/
+theorem List.lexOrdering.ofStrictOrder :
+    isStrictOrder R → isStrictOrder (List.lexOrdering R) := by
+  intro strictR
+  have strictD := List.derivedOrdering.ofStrictOrder R strictR
+  constructor
+  · intro x loop; have := (List.lexOrdering.iffDerived R x x).mpr loop; apply strictD.irref; aesop
+  · intro x y edge₁ edge₂
+    have := (List.lexOrdering.iffDerived R x y).mpr edge₁
+    have := (List.lexOrdering.iffDerived R y x).mpr edge₂
+    apply strictD.asymm <;> aesop
+  · intro x y z edge₁ edge₂ 
+    have := (List.lexOrdering.iffDerived R x y).mpr edge₁
+    have := (List.lexOrdering.iffDerived R y z).mpr edge₂
+    apply (List.lexOrdering.iffDerived R x z).mp
+    apply strictD.trans <;> aesop
+
+/-- Lemma 2.4.3 (b) -/
+theorem List.lexOrdering.ofTerminating : 
+    terminating R → terminating (List.lexOrdering R) := by
+  intro termR ⟨chain, desc⟩
+  have derivedTerminating := List.derivedOrdering.ofTerminating R termR
+  apply derivedTerminating
+  exists λn ↦ (chain n).derivedPos

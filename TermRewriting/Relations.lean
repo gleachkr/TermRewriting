@@ -182,5 +182,12 @@ structure isStrictLinearOrder (R : α → α → Prop) : Prop where
   trans : isTransitive R
   cnctd : isConnected R
 
+theorem Nat.isStrictLinearOrder : isStrictLinearOrder (λ x y => Nat.lt y x) := by
+  constructor
+  · exact Nat.lt_irrefl
+  · intro x y edge₁ edge₂; apply Nat.lt_asymm edge₁ <;> assumption
+  · intro x y z edge₁ edge₂; apply Nat.lt_trans <;> assumption
+  · intro x y neq; apply Nat.lt_or_gt.mp <;> aesop
+
 instance : Coe (isStrictLinearOrder R) (isStrictOrder R) where
   coe s := ⟨s.irref, s.asymm, s.trans⟩

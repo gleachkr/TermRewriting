@@ -3,6 +3,7 @@ import TermRewriting.WellFoundedInduction_2_2
 variable (R : α → α → Prop) 
 variable (S : β → β → Prop) 
 
+--this probably belongs in Relations.lean
 def monotoneIn (R : α → α → Prop) (S : β → β → Prop) (f : α → β) := ∀{x y}, R x y → S (f x) (f y)
 
 theorem monotoneIn.termination : ∀{f}, monotoneIn R S f → terminating S → terminating R := by
@@ -13,7 +14,7 @@ theorem monotoneIn.termination : ∀{f}, monotoneIn R S f → terminating S → 
   apply mono
   apply desc
 
-theorem Nat.lt_terminating : terminating (λ x y => ¬Nat.le x y) := by
+theorem Nat.lt_terminating : terminating (λ x y => Nat.lt y x) := by
   have : ∀n k, k ≤ n → ¬∃c, c 0 = k ∧ isDescendingChain (λ x y => ¬Nat.le x y) c := by
     intro n; induction n
     case zero => intro k le ⟨chain, eq, desc⟩; have := desc 0; simp_all
@@ -26,7 +27,7 @@ theorem Nat.lt_terminating : terminating (λ x y => ¬Nat.le x y) := by
         · simp_all; apply chain_shift (λ x y => y < x) chain desc
   intro ⟨chain, desc⟩
   apply this (chain 0) (chain 0) <;> try simp
-  exists chain; simp_all
+  exists chain
 
 /-- Lemma 2.3.3 -/
 theorem finitely_branching.terminating_iff_monotoneInN : finitely_branching R →
@@ -35,7 +36,7 @@ theorem finitely_branching.terminating_iff_monotoneInN : finitely_branching R �
   case mpr => 
     intro ⟨f,mono⟩
     apply monotoneIn.termination R (λ x y => ¬Nat.le x y) mono
-    apply Nat.lt_terminating
+    simp_all; apply Nat.lt_terminating
   case mp => 
     intro term
     have gf := terminating.finite_local_global R term fin_b
