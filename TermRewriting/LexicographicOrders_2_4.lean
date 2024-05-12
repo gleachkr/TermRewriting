@@ -140,7 +140,7 @@ theorem LexProduct.ofTerminating : terminating R → terminating S →
       rw [this i (by omega) (min.left.left)]
       apply chainLProp i (min.left.right)
   apply strictR
-  exact descending.fromAE R chainL next₂
+  exact descending.fromAE_chain R chainL next₂
 
 theorem LexProduct.ofwWFI : wWFI R → wWFI S → wWFI (LexProduct R S) := by
   intro wfiR wfiS P hereditary
@@ -229,7 +229,7 @@ theorem LexPower.ofTransitive : isTransitive R → ∀n, isTransitive (LexPower 
 
 theorem LexPower.ofStrictOrder : 
     isStrictOrder R → ∀n, isStrictOrder (LexPower R n) := by
-  intro strict; intro n; constructor
+  intro strict n; constructor
   · apply LexPower.ofIrreflexive; exact strict.irref
   · apply LexPower.ofAsymmetric; exact strict.asymm
   · apply LexPower.ofTransitive; exact strict.trans

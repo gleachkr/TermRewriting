@@ -114,6 +114,12 @@ def globally_finite := finitely_branching (TransClosure R)
 @[simp]
 def acyclic := ∀x, ¬TransClosure R x x
 
+theorem acyclic.of_strictOrder : isStrictOrder R → acyclic R := by
+  intro hyp x loop
+  apply hyp.irref x
+  apply TransClosure.minimal R hyp.trans
+  assumption
+
 /-- Lemma 2.2.4 -/
 theorem terminating.finite_local_global : terminating R → finitely_branching R → globally_finite R := by
   intro term fini; simp
@@ -143,7 +149,7 @@ theorem terminating.acyclic : terminating R → acyclic R := by
   apply terminating.irreflexive (TransClosure R)
   exact (terminating.trans_closure R).mpr term
 
-theorem descending.fromAE (c : Nat → α) : (∀n, ∃m, n < m ∧ R (c n) (c m)) → 
+theorem descending.fromAE_chain (c : Nat → α) : (∀n, ∃m, n < m ∧ R (c n) (c m)) → 
     ∃chain, isDescendingChain R chain := by
   intro hyp
   have ⟨next,cprop⟩ := skolem.mp hyp
@@ -151,6 +157,15 @@ theorem descending.fromAE (c : Nat → α) : (∀n, ∃m, n < m ∧ R (c n) (c m
   intro n; simp
   conv => rhs; unfold iter_chain
   apply (cprop (iter_chain next 0 n)).2
+
+theorem descending.fromAE : Nonempty α → (∀x, ∃y, R x y) → 
+    ∃chain, isDescendingChain R chain := by
+  rintro ⟨x⟩ hyp
+  have ⟨next,cprop⟩ := skolem.mp hyp
+  exists (λn ↦ iter_chain next x n)
+  intro n; simp
+  conv => rhs; unfold iter_chain
+  apply cprop
 
 theorem acyclic.chain_injection : acyclic R → ∀c, isDescendingChain R c → 
     Function.Injective c := 

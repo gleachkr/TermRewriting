@@ -1,4 +1,5 @@
 import Aesop
+import Mathlib.Init.Function
 
 variable (R S : α → α → Prop) 
 
@@ -17,7 +18,7 @@ inductive TransClosure (R : α → α → Prop) : α → α → Prop
 
 def isTransitive : Prop := ∀{x y z}, R x y → R y z → R x z
 
-theorem TransClosure.isTransitive : isTransitive (TransClosure R) := 
+theorem TransClosure.transitive : isTransitive (TransClosure R) := 
   by intros x y z step₁ step₂; induction step₁ <;> aesop
 
 theorem TransClosure.monotone : monotone R S TransClosure := 
@@ -38,6 +39,9 @@ theorem TransClosure.pop : TransClosure R x y → R x y ∨ ∃ z, TransClosure 
         have ⟨w,ih₁⟩ := ih
         exists w
         aesop
+
+theorem TransClosure.minimal : isTransitive R → TransClosure R ⊆ R := by 
+  intro hyp x y step; induction step <;> aesop
 
 instance : Coe (R x y : Prop) (TransClosure R x y) where coe h := TransClosure.base x y h
 
@@ -83,7 +87,7 @@ theorem ReflTransClosure.isTransitive : isTransitive (ReflTransClosure R) :=
      case base step₂ => 
        cases step₁ <;> apply ReflClosure.base
        case refl => aesop
-       case base step₁ => apply TransClosure.isTransitive <;> assumption
+       case base step₁ => apply TransClosure.transitive <;> assumption
 
 theorem ReflTransClosure.step : ∀x y z, R x y → ReflTransClosure R y z → ReflTransClosure R x z :=
   by intro x y z step; apply ReflTransClosure.isTransitive R step
@@ -130,7 +134,7 @@ theorem ReflTransSymClosure.isSymmetric : isSymmetric (ReflTransSymClosure R) :=
           case refl => apply ReflTransClosure.base; apply SymClosure.isSymmetric; assumption
           case base step₃ => 
             apply ReflClosure.base
-            apply TransClosure.isTransitive (SymClosure R) step₃
+            apply TransClosure.transitive (SymClosure R) step₃
             apply TransClosure.base
             apply SymClosure.isSymmetric
             assumption
@@ -175,6 +179,15 @@ structure isStrictOrder (R : α → α → Prop) : Prop where
   irref : isIrreflexive R
   asymm : isAsymmetric R
   trans : isTransitive R
+
+theorem StrictOrder.of_converse : isStrictOrder (λ x y ↦ R y x) ↔ isStrictOrder R := by
+  constructor; all_goals
+    intro conv; constructor
+    · intro x; exact conv.irref x
+    · intro x y; exact conv.asymm y x
+    · intro x y z step₁ step₂; exact conv.trans step₂ step₁
+
+theorem StrictOrder.on_subtype : ∀f: β → α , Function.Injective f → isStrictOrder R → isStrictOrder (λx y ↦ R (f x) (f y)) := sorry
 
 structure isStrictLinearOrder (R : α → α → Prop) : Prop where
   irref : isIrreflexive R
