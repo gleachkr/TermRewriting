@@ -187,7 +187,13 @@ theorem StrictOrder.of_converse : isStrictOrder (λ x y ↦ R y x) ↔ isStrictO
     · intro x y; exact conv.asymm y x
     · intro x y z step₁ step₂; exact conv.trans step₂ step₁
 
-theorem StrictOrder.on_subtype : ∀f: β → α , Function.Injective f → isStrictOrder R → isStrictOrder (λx y ↦ R (f x) (f y)) := sorry
+theorem StrictOrder.preimage: 
+  ∀f: β → α, isStrictOrder R → isStrictOrder (λx y ↦ R (f x) (f y)) := by
+  intro f strict
+  constructor
+  · intro x hyp; apply strict.irref (f x) hyp
+  · intro x y step₁ step₂; apply strict.asymm <;> aesop
+  · intro x y z step₁ step₂; apply strict.trans <;> aesop
 
 structure isStrictLinearOrder (R : α → α → Prop) : Prop where
   irref : isIrreflexive R
@@ -198,9 +204,9 @@ structure isStrictLinearOrder (R : α → α → Prop) : Prop where
 theorem Nat.isStrictLinearOrder : isStrictLinearOrder (λ x y => Nat.lt y x) := by
   constructor
   · exact Nat.lt_irrefl
-  · intro x y edge₁ edge₂; apply Nat.lt_asymm edge₁ <;> assumption
+  · intro x y edge₁ edge₂; apply Nat.lt_asymm edge₁; assumption
   · intro x y z edge₁ edge₂; apply Nat.lt_trans <;> assumption
-  · intro x y neq; apply Nat.lt_or_gt.mp <;> aesop
+  · intro x y neq; apply Nat.lt_or_gt.mp; aesop
 
 instance : Coe (isStrictLinearOrder R) (isStrictOrder R) where
   coe s := ⟨s.irref, s.asymm, s.trans⟩

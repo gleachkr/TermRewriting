@@ -190,6 +190,16 @@ theorem acyclic.tc_infinite : acyclic R → ∀{c}, isDescendingChain R c →
      have := acyclic.chain_injection R acyc chain desc eq_c
      simp_all
 
+theorem acyclic.codomain_infinite : acyclic R → ∀{c}, isDescendingChain R c → 
+    Infinite α := 
+  by intro acyc c desc
+     apply not_finite_iff_infinite.mp
+     intro fin
+     have tc_fin : Finite { z // TransClosure R (c 0) z } := by
+        apply Subtype.finite
+     have tc_inf := acyclic.tc_infinite R acyc desc
+     exact not_finite_iff_infinite.mpr tc_inf tc_fin
+
 theorem acyclic.tc_subset : acyclic R → ∀x y, R x y → 
     {z | TransClosure R y z} ⊂ { z | TransClosure R x z} := 
   by intro acyc x y step; constructor

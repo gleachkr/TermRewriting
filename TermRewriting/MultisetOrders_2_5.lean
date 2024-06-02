@@ -6,6 +6,7 @@ def MultisetOver α := α → Nat
 
 def MultisetOver.Mem (x : α) (m : MultisetOver α) := m x > 0
 
+@[simp]
 def MultisetOver.Finite (m : MultisetOver α) := Set.Finite { x | Mem x m }
 
 def MultisetOver.Nonempty (m : MultisetOver α) := Set.Nonempty { x | Mem x m }
@@ -17,6 +18,45 @@ def MultisetOver.Subset (m₁ m₂ : MultisetOver α) := ∀x, m₁ x ≤ m₂ x
 
 @[simp]
 def MultisetOver.Union (m₁ m₂ : MultisetOver α) := λx ↦ m₁ x + m₂ x
+
+def MultisetOver.Union_mem : {x | Mem x (Union m₁ m₂)} = { x | Mem x m₁ } ∪ { x | Mem x m₂ } := by
+  apply Set.ext; intro x; constructor
+  case mp => 
+    intro hyp
+    have := Nat.not_le_of_gt hyp
+    apply Classical.byContradiction
+    intro hyp₂
+    apply this
+    simp_all
+    constructor
+    case left => 
+      apply Classical.byContradiction
+      intro contra
+      apply hyp₂
+      apply Or.inl
+      apply Nat.zero_lt_of_ne_zero
+      assumption
+    case right => 
+      apply Classical.byContradiction
+      intro contra
+      apply hyp₂
+      apply Or.inr
+      apply Nat.zero_lt_of_ne_zero
+      assumption
+  case mpr => 
+    intro hyp
+    cases hyp
+    case inl hyp => apply Nat.add_pos_left; assumption
+    case inr hyp => apply Nat.add_pos_right; assumption
+
+def FinMultisetOver.Union (m₁ m₂ : FinMultisetOver α) : FinMultisetOver α := by
+  constructor
+  case val => exact MultisetOver.Union m₁.val m₂.val
+  case property => 
+    simp
+    rw [MultisetOver.Union_mem]
+    apply Set.finite_union.mpr
+    exact ⟨m₁.property, m₂.property⟩
 
 @[simp]
 def MultisetOver.Difference (m₁ m₂ : MultisetOver α) := λx ↦ m₁ x - m₂ x
@@ -36,7 +76,7 @@ theorem MultisetOver.ofStrictOrder : isStrictOrder R → isStrictOrder (ordering
     have : X = Y := by
       apply Subtype.eq
       funext el
-      have : x el + X.val el = X.val el + (x el - X.val el) +  Y.val el  := by
+      have : x el + X.val el = X.val el + (x el - X.val el) + Y.val el := by
         conv => lhs; rw [eq]
         simp_arith
       rw [Nat.add_sub_cancel' (sub el)] at this 
@@ -46,16 +86,17 @@ theorem MultisetOver.ofStrictOrder : isStrictOrder R → isStrictOrder (ordering
     rw [this] at inhab
     have : ∀x : { z | Mem z Y.val }, ∃y : { z | Mem z Y.val}, R y x := by 
       intro x; have ⟨y, yprop⟩ := cond x.val x.prop; exists ⟨y, yprop.1⟩; simp; exact yprop.2
-    unfold Nonempty at inhab; unfold Set.Nonempty at inhab
     have ⟨a,prop⟩ := inhab
-    have ⟨chain,cprop⟩ := descending.fromAE (λ x y : { z | Mem z Y.val} ↦ R y x) ⟨a,prop⟩ this
-    have strict_conv := (StrictOrder.of_converse R).mpr strict
-    sorry
-  all_goals sorry
+    let restrictedOrder := λ x y : { z | Mem z Y.val } ↦ R y x
+    have ⟨chain,cprop⟩ := descending.fromAE restrictedOrder ⟨a,prop⟩ this
+    have rs_acyc : acyclic restrictedOrder := by 
+      apply acyclic.of_strictOrder
+      apply StrictOrder.preimage (λx y => R y x) Subtype.val
+      exact (StrictOrder.of_converse R).mpr strict
+    apply not_infinite_iff_finite.mpr Y.prop
+    exact acyclic.codomain_infinite restrictedOrder rs_acyc cprop
+  case trans => 
+    rintro x y z ⟨X,Y,inhab₁,sub₁,eq₁,cond₁⟩ ⟨Z,W,inhab₂,sub₂,eq₂,cond₂⟩
+    exists MultisetOver.Union X.val (MultisetOver.Difference Z.val Y.val) 
 
-
-
-    --apply Set.Finite.not_infinite X.prop
-
-
-
+  case asymm => sorry
