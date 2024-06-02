@@ -4,6 +4,7 @@ variable (R S : α → α → Prop)
 
 def MultisetOver α := α → Nat
 
+@[simp]
 def MultisetOver.Mem (x : α) (m : MultisetOver α) := m x > 0
 
 @[simp]
@@ -19,7 +20,7 @@ def MultisetOver.Subset (m₁ m₂ : MultisetOver α) := ∀x, m₁ x ≤ m₂ x
 @[simp]
 def MultisetOver.Union (m₁ m₂ : MultisetOver α) := λx ↦ m₁ x + m₂ x
 
-def MultisetOver.Union_mem : {x | Mem x (Union m₁ m₂)} = { x | Mem x m₁ } ∪ { x | Mem x m₂ } := by
+theorem MultisetOver.Union_mem : {x | Mem x (Union m₁ m₂)} = { x | Mem x m₁ } ∪ { x | Mem x m₂ } := by
   apply Set.ext; intro x; constructor
   case mp => 
     intro hyp
@@ -28,24 +29,8 @@ def MultisetOver.Union_mem : {x | Mem x (Union m₁ m₂)} = { x | Mem x m₁ } 
     intro hyp₂
     apply this
     simp_all
-    constructor
-    case left => 
-      apply Classical.byContradiction
-      intro contra
-      apply hyp₂
-      apply Or.inl
-      apply Nat.zero_lt_of_ne_zero
-      assumption
-    case right => 
-      apply Classical.byContradiction
-      intro contra
-      apply hyp₂
-      apply Or.inr
-      apply Nat.zero_lt_of_ne_zero
-      assumption
   case mpr => 
-    intro hyp
-    cases hyp
+    rintro (hyp | hyp)
     case inl hyp => apply Nat.add_pos_left; assumption
     case inr hyp => apply Nat.add_pos_right; assumption
 
@@ -54,12 +39,24 @@ def FinMultisetOver.Union (m₁ m₂ : FinMultisetOver α) : FinMultisetOver α 
   case val => exact MultisetOver.Union m₁.val m₂.val
   case property => 
     simp
-    rw [MultisetOver.Union_mem]
     apply Set.finite_union.mpr
     exact ⟨m₁.property, m₂.property⟩
 
+
 @[simp]
 def MultisetOver.Difference (m₁ m₂ : MultisetOver α) := λx ↦ m₁ x - m₂ x
+
+theorem MultisetOver.Difference_mem (m₁ m₂ : MultisetOver α) : 
+    {x | Mem x (Difference m₁ m₂)} ⊆ {x | Mem x m₁}:= 
+  by rintro x hyp; simp_all; omega
+
+def FinMultisetOver.Difference (m₁ m₂ : FinMultisetOver α) : FinMultisetOver α := by
+  constructor
+  case val => exact MultisetOver.Difference m₁.val m₂.val
+  case property =>
+    apply Set.Finite.subset _ (MultisetOver.Difference_mem m₁.val m₂.val)
+    exact m₁.property
+
 def MultisetOver.Empty := λ_ : α ↦ 0
 
 def MultisetOver.ordering (m₁ m₂ : MultisetOver α) := 
@@ -97,6 +94,6 @@ theorem MultisetOver.ofStrictOrder : isStrictOrder R → isStrictOrder (ordering
     exact acyclic.codomain_infinite restrictedOrder rs_acyc cprop
   case trans => 
     rintro x y z ⟨X,Y,inhab₁,sub₁,eq₁,cond₁⟩ ⟨Z,W,inhab₂,sub₂,eq₂,cond₂⟩
-    exists MultisetOver.Union X.val (MultisetOver.Difference Z.val Y.val) 
+    exists FinMultisetOver.Union X (FinMultisetOver.Difference Z Y) 
 
   case asymm => sorry
