@@ -180,6 +180,20 @@ structure isStrictOrder (R : α → α → Prop) : Prop where
   asymm : isAsymmetric R
   trans : isTransitive R
 
+theorem StrictOrder.of_minimal_conditions: 
+  (trans : isTransitive R) → (asymm : isAsymmetric R) → isStrictOrder R := by
+  intro trans asymm; constructor 
+  · apply isAsymmetric.isIrreflexive; assumption
+  · assumption
+  · assumption
+
+theorem StrictOrder.of_minimal_conditions': 
+  (trans : isTransitive R) → (irref : isIrreflexive R) → isStrictOrder R := by
+  intro trans asymm; constructor 
+  · assumption
+  · intro x y step step; aesop
+  · assumption
+
 theorem StrictOrder.of_converse : isStrictOrder (λ x y ↦ R y x) ↔ isStrictOrder R := by
   constructor; all_goals
     intro conv; constructor

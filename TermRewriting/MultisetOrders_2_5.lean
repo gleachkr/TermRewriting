@@ -68,8 +68,9 @@ def MultisetOver.ordering (m₁ m₂ : MultisetOver α) :=
     m₂ = MultisetOver.Union (MultisetOver.Difference m₁ X.1) Y.1 ∧
     ∀y, MultisetOver.Mem y Y.1 → ∃x, MultisetOver.Mem x X.1 ∧ R x y
 
+/- Lemma 2.5.4 -/
 theorem MultisetOver.ofStrictOrder : isStrictOrder R → isStrictOrder (ordering R) := by
-  intro strict; constructor
+  intro strict; apply StrictOrder.of_minimal_conditions'
   case irref =>
     rintro x ⟨X,Y,inhab,sub,eq,cond⟩
     have : X = Y := by
@@ -120,7 +121,6 @@ theorem MultisetOver.ofStrictOrder : isStrictOrder R → isStrictOrder (ordering
           exact Or.inl prop₁
         case inl hyp =>
           have ⟨witness,⟨prop₁,prop₂⟩⟩ := cond₂ k hyp
-          have mem : Mem witness y := Nat.lt_of_lt_of_le prop₁ (sub₂ witness)
           cases Classical.em (Mem witness Y.val)
           case inl hyp₂ => 
             have ⟨witness₂,⟨prop₃,prop₄⟩⟩ := cond₁ witness hyp₂
@@ -135,4 +135,3 @@ theorem MultisetOver.ofStrictOrder : isStrictOrder R → isStrictOrder (ordering
             simp at hyp₂
             rw [hyp₂]
             exact prop₁
-  case asymm => sorry
