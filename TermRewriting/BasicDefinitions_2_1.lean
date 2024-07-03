@@ -4,6 +4,7 @@ import TermRewriting.Relations
 variable (R S : α → α → Prop) 
 
 def reducible (x : α) : Prop := ∃y, R x y
+def field (x : α) : Prop := ∃y, R x y ∨ R y x
 def inNormalForm (x : α) : Prop := ¬reducible R x
 def normalFormOf (x y : α) : Prop:= ReflTransClosure R x y ∧ inNormalForm R y
 def joinable (x y : α) : Prop := ∃z, ReflTransClosure R x z ∧ ReflTransClosure R y z

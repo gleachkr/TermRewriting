@@ -73,6 +73,26 @@ theorem terminating.WFI : terminating R → WFI R := by
 theorem chain_shift : ∀c, isDescendingChain R c → isDescendingChain R (λ n ↦ c (n + 1)) := by
   intro c chain n; apply chain
 
+theorem chain_append' : ∀c, isDescendingChain R c → TransClosure R x y → y = c 0 →
+  ∃c₂, isDescendingChain R c₂ ∧ c₂ 0 = x  := by
+  intro c chain edge eq; induction edge
+  case base a b edge => 
+    exists λn ↦ match n with | 0 => a | n + 1 => c n
+    constructor
+    · intro n; aesop
+    · aesop
+  case step a b d edge tcedge ih =>
+    have ⟨c₂, chain₂, eq₂⟩ := ih eq
+    exists λn ↦ match n with | 0 => a | n + 1 => c₂ n
+    constructor
+    · intro n; aesop
+    · aesop
+
+theorem chain_append : ∀c, isDescendingChain R c → TransClosure R x (c 0) → 
+  ∃c₂, isDescendingChain R c₂ ∧ c₂ 0 = x  := by
+  intro c chain edge
+  apply chain_append' <;> aesop
+
 theorem chain_lift : ∀c, isDescendingChain R c → isDescendingChain (TransClosure R) c := by
   intro c chain n; apply TransClosure.base; apply chain
 
@@ -249,3 +269,28 @@ theorem acyclic.globally_finite_terminates :
   have infini : Infinite { z // TransClosure R (chain 0) z } := acyclic.tc_infinite R acyc desc
   apply infini.not_finite
   apply fini
+
+def root (R : α → α → Prop) r := ∀n, field R n → n = r ∨ TransClosure R r n
+
+theorem konig : ∀r, acyclic R → finitely_branching R → root R r → ¬ Finite {z | TransClosure R r z} 
+  → ∃c, isDescendingChain R c ∧ c 0 = r := by
+  intro r _ acyc rooted fini
+  have not_terminating : ¬terminating R := by 
+    intro term
+    apply fini
+    apply Fintype.finite
+    apply globally_finite_fintype
+    apply terminating.finite_local_global
+    repeat assumption
+  have : ∃c, isDescendingChain R c := by
+    apply Classical.not_forall_not.mp
+    intro nchain
+    apply not_terminating
+    rintro ⟨c, chain⟩ 
+    exact nchain c chain
+  have ⟨c,chain⟩ := this
+  have : field R (c 0) := by
+    exists c 1; apply Or.inl; apply chain
+  cases rooted (c 0) this
+  · aesop
+  · apply chain_append R c <;> aesop
