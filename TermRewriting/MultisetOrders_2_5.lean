@@ -135,3 +135,37 @@ theorem MultisetOver.ofStrictOrder : isStrictOrder R → isStrictOrder (ordering
             simp at hyp₂
             rw [hyp₂]
             exact prop₁
+
+def MultisetOver.toRelation 
+  (c : Nat → MultisetOver α) 
+  (x₁ : α × Nat)
+  (x₂ : α × Nat)
+  : Prop := 
+  let ⟨m₁, n₁⟩ := x₁
+  let ⟨m₂, n₂⟩ := x₂
+  let ms := c n₂
+  let ms_prev := c (n₂ - 1)
+  n₁ < n₂ ∧ R m₁ m₂ ∧ ms m₁ < ms_prev m₁ ∧ ms m₂ > ms_prev m₂
+
+/- This is the relation we'll use to prove termination. 
+
+Basic proof sketch is as follows. 
+
+1. the relation induced by a chain is acyclic, because of the first conjunct.
+
+2. if c is a descending chain, the relation induced by a chain is finitely
+branching. for each k > n, (a, n) can have only finitely many children (b,k),
+because only finitely many elements have their count increased at a given step
+in the chain, and in order for (a,n) to see (b,k), b's count needs to be
+increased at stage k. (a,n) can also only see elements (b,k) for finitely many
+distinct k, because for (a,n) to see (b,k), the count of a needs to have
+decreased at stage k, and this can only happen finitely often. So each (a, n)
+has only finitely many children
+
+3. If c is a descending chain, then the resulting relation is infinite, because
+elements are added to the relation with every step.
+
+hence, the induced relation has an infinite branch (by generalized konig) and
+that branch induces a descending chain in R.
+
+-/
