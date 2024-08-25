@@ -154,7 +154,6 @@ theorem MultisetOver.toRelation.tc_to_lt: ∀c : Nat → MultisetOver α, TransC
   case step x y z step _ lt => 
     apply Nat.lt_trans step.1 lt
 
-  
 theorem MultisetOver.toRelation.acyclic : ∀c : Nat → MultisetOver α, isDescendingChain (ordering R) c → acyclic (MultisetOver.toRelation R c) := by
   intro c _ x contra
   apply Nat.lt_irrefl
@@ -164,7 +163,7 @@ theorem MultisetOver.toRelation.acyclic : ∀c : Nat → MultisetOver α, isDesc
 
 Basic proof sketch is as follows. 
 
-1. the relation induced by a chain is acyclic, because of the first conjunct.
+1. the relation induced by a chain is acyclic, because of the first conjunct. ✓
 
 2. if c is a descending chain, the relation induced by a chain is finitely
 branching. for each k > n, (a, n) can have only finitely many children (b,k),
