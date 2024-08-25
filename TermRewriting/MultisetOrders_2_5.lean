@@ -147,6 +147,19 @@ def MultisetOver.toRelation
   let ms_prev := c (n₂ - 1)
   n₁ < n₂ ∧ R m₁ m₂ ∧ ms m₁ < ms_prev m₁ ∧ ms m₂ > ms_prev m₂
 
+theorem MultisetOver.toRelation.tc_to_lt: ∀c : Nat → MultisetOver α, TransClosure (MultisetOver.toRelation R c) x y → x.2 < y.2 := by
+  intro c hyp
+  induction hyp
+  case base a b rel => exact rel.1
+  case step x y z step _ lt => 
+    apply Nat.lt_trans step.1 lt
+
+  
+theorem MultisetOver.toRelation.acyclic : ∀c : Nat → MultisetOver α, isDescendingChain (ordering R) c → acyclic (MultisetOver.toRelation R c) := by
+  intro c _ x contra
+  apply Nat.lt_irrefl
+  exact MultisetOver.toRelation.tc_to_lt R c contra
+
 /- This is the relation we'll use to prove termination. 
 
 Basic proof sketch is as follows. 
