@@ -154,6 +154,14 @@ theorem MultisetOver.toRelation.tc_to_lt: ∀c : Nat → MultisetOver α, TransC
   case step x y z step _ lt => 
     apply Nat.lt_trans step.1 lt
 
+theorem MultisetOver.toRelation.tc_to_tc_of_rel: ∀c : Nat → MultisetOver α, TransClosure (MultisetOver.toRelation R c) x y → TransClosure R x.1 y.1 := by
+  intro c hyp
+  induction hyp
+  case base a b rel => exact TransClosure.base a.1 b.1 rel.2.1
+  case step x y z rel _ tc_prev =>
+    apply TransClosure.step x.1 y.1 z.1 rel.2.1
+    assumption
+
 theorem MultisetOver.toRelation.acyclic : ∀c : Nat → MultisetOver α, isDescendingChain (ordering R) c → acyclic (MultisetOver.toRelation R c) := by
   intro c _ x contra
   apply Nat.lt_irrefl
@@ -163,19 +171,19 @@ theorem MultisetOver.toRelation.acyclic : ∀c : Nat → MultisetOver α, isDesc
 
 Basic proof sketch is as follows. 
 
-1. the relation induced by a chain is acyclic, because of the first conjunct. ✓
+1. the relation induced by a multiset chain is acyclic, because of the first conjunct. ✓
 
-2. if c is a descending chain, the relation induced by a chain is finitely
-branching. for each k > n, (a, n) can have only finitely many children (b,k),
-because only finitely many elements have their count increased at a given step
-in the chain, and in order for (a,n) to see (b,k), b's count needs to be
-increased at stage k. (a,n) can also only see elements (b,k) for finitely many
-distinct k, because for (a,n) to see (b,k), the count of a needs to have
+2. if c is a descending multiset chain, the relation induced by a chain is
+finitely branching. for each k > n, (a, n) can have only finitely many children
+(b,k), because only finitely many elements have their count increased at
+a given step in the chain, and in order for (a,n) to see (b,k), b's count needs
+to be increased at stage k. (a,n) can also only see elements (b,k) for finitely
+many distinct k, because for (a,n) to see (b,k), the count of a needs to have
 decreased at stage k, and this can only happen finitely often. So each (a, n)
 has only finitely many children
 
-3. If c is a descending chain, then the resulting relation is infinite, because
-elements are added to the relation with every step.
+3. If c is a descending multiset chain, then the relation induced by c is
+infinite, because elements are added to the relation with every step. 
 
 hence, the induced relation has an infinite branch (by generalized konig) and
 that branch induces a descending chain in R.
