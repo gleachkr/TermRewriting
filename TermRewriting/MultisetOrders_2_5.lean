@@ -136,6 +136,7 @@ theorem MultisetOver.ofStrictOrder : isStrictOrder R → isStrictOrder (ordering
             rw [hyp₂]
             exact prop₁
 
+--need to modify relation to be rooted, and make the below about finite multisets
 def MultisetOver.toRelation 
   (c : Nat → MultisetOver α) 
   (x₁ : α × Nat)
@@ -162,10 +163,16 @@ theorem MultisetOver.toRelation.tc_to_tc_of_rel: ∀c : Nat → MultisetOver α,
     apply TransClosure.step x.1 y.1 z.1 rel.2.1
     assumption
 
-theorem MultisetOver.toRelation.acyclic : ∀c : Nat → MultisetOver α, isDescendingChain (ordering R) c → acyclic (MultisetOver.toRelation R c) := by
-  intro c _ x contra
+theorem MultisetOver.toRelation.acyclic : ∀c : Nat → MultisetOver α, acyclic (MultisetOver.toRelation R c) := by
+  intro c x contra
   apply Nat.lt_irrefl
   exact MultisetOver.toRelation.tc_to_lt R c contra
+
+theorem MultisetOver.toRelation.finitelyBranching: ∀c : Nat → MultisetOver α, 
+  Finite (c 0) → isDescendingChain (ordering R) c → finitely_branching (MultisetOver.toRelation R c) := sorry
+
+theorem MultisetOver.toRelation.infinite : ∀c : Nat → MultisetOver α, 
+  isDescendingChain (ordering R) c → ¬Set.Finite {x | TransClosure (MultisetOver.toRelation R c) x y } := sorry
 
 /- This is the relation we'll use to prove termination. 
 
